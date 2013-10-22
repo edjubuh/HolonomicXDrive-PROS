@@ -8,23 +8,23 @@
 #ifndef HOLONOMICRADIANS_H_
 #define HOLONOMICRADIANS_H_
 
-#define maxMotorSpeed 127
-#define numberOfMotors 4
+#define maxMotorSpeed 	127
+#define numberOfMotors 	4
 
-#define PI 3.14159265358979
+#define	PI	3.14159265358979
 
 #include <math.h>
 #include "CortexDefinitions.h"
 
 //**--------------------- SUPPORT FUNCTIONS ----------------------**//
-float FindMaxFloat(float a [])
+double FindMaxdouble(double a [])
 {
-	float maxFloat = 0;
+	double maxdouble = 0;
 	for (int i = 0; i < sizeof(a); i++)
 	{
-		if (a[i] > maxFloat) maxFloat = a[i];
+		if (a[i] > maxdouble) maxdouble = a[i];
 	}
-	return maxFloat;
+	return maxdouble;
 }
 //**------------------- MAIN FUNCTIONS --------------------------- **//
 
@@ -38,22 +38,22 @@ float FindMaxFloat(float a [])
 * @param speed The speed of motion, from 0 to 1
 * @param rotation The speed of rotation of the bot, from -127 to 127
 */
-void RadianOutput(float radians, float speed, int rotation)
+void RadianOutput(double radians, double speed, int rotation)
 {
 	if (speed > 0)
 	{
-		float frontLeftOutput = -maxMotorSpeed * cos((PI / 4) - radians);
-		float frontRightOutput = maxMotorSpeed * cos((PI / 4) + radians);
-		float rearRightOutput = maxMotorSpeed * cos((PI / 4) - radians);
-		float rearLeftOutput = -maxMotorSpeed * cos((PI / 4) + radians);
+		double frontLeftOutput = ( (-1 * maxMotorSpeed) * cos((PI / 4) - radians) ), /*added "-1*" for clarification*/
+		       frontRightOutput = (maxMotorSpeed * cos((PI / 4) + radians) ),
+		       rearRightOutput = (maxMotorSpeed * cos((PI / 4) - radians) ),
+		       rearLeftOutput = ( (-1 * maxMotorSpeed) * cos( (PI / 4) + radians) );
 
 		frontLeftOutput += rotation;
 		frontRightOutput += rotation;
 		rearRightOutput += rotation;
 		rearLeftOutput += rotation;
 
-		float output[4] = { frontLeftOutput, frontRightOutput, rearLeftOutput, rearRightOutput };
-		float maxValue = FindMaxFloat(output);
+		double output[4] = { frontLeftOutput, frontRightOutput, rearLeftOutput, rearRightOutput };
+		double maxValue = FindMaxdouble(output);
 		speed *= maxMotorSpeed / maxValue;
 
 		frontLeftOutput *= speed;
@@ -81,7 +81,13 @@ void RadianOutput(float radians, float speed, int rotation)
 	}
 }
 
-float getJoyPolarRadians() { return atan2((float) joystickGetAnalog(1, 2), (float) joystickGetAnalog(1, 1)); }
-float getJoyPolarSpeed() { return maxMotorSpeed / sqrt((float) (joystickGetAnalog(1, 2) ^ 2) + (float) (joystickGetAnalog(1, 1) ^ 2)); }
+double getJoyPolarRadians() 
+{ 
+	return atan2((double) joystickGetAnalog(1, 2), (double) joystickGetAnalog(1, 1)); 
+}
+double getJoyPolarSpeed() 
+{ 
+	return (maxMotorSpeed / sqrt((double) (joystickGetAnalog(1, 2) ^ 2) + (double) (joystickGetAnalog(1, 1) ^ 2))); 
+}
 
 #endif HOLONOMICRADIANS_H_
