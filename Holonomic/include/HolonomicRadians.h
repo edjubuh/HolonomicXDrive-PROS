@@ -17,10 +17,10 @@
 #include "CortexDefinitions.h"
 
 //**--------------------- SUPPORT FUNCTIONS ----------------------**//
-double FindMaxdouble(double a [])
+double FindMaxDouble(double a [])
 {
 	double maxdouble = 0;
-	for (int i = 0; i < sizeof(a); i++)
+	for (int i = 0; i < (sizeof(a)/sizeof(double)); i++)
 	{
 		if (a[i] > maxdouble) maxdouble = a[i];
 	}
@@ -53,7 +53,7 @@ void RadianOutput(double radians, double speed, int rotation)
 		rearLeftOutput += rotation;
 
 		double output[4] = { frontLeftOutput, frontRightOutput, rearLeftOutput, rearRightOutput };
-		double maxValue = FindMaxdouble(output);
+		double maxValue = FindMaxDouble(output);
 		speed *= maxMotorSpeed / maxValue;
 
 		frontLeftOutput *= speed;
