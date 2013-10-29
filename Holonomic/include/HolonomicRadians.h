@@ -20,7 +20,7 @@
 double FindMaxDouble(double a [])
 {
 	double maxdouble = 0;
-	for (int i = 0; i < (sizeof(a)/sizeof(double)); i++)
+	for (int i = 0; i < sizeof(a); i++)
 	{
 		if (a[i] > maxdouble) maxdouble = a[i];
 	}
@@ -42,10 +42,10 @@ void RadianOutput(double radians, double speed, int rotation)
 {
 	if (speed > 0)
 	{
-		double frontLeftOutput = ( (-1 * maxMotorSpeed) * cos((PI / 4) - radians) ), /*added "-1*" for clarification*/
-		       frontRightOutput = (maxMotorSpeed * cos((PI / 4) + radians) ),
-		       rearRightOutput = (maxMotorSpeed * cos((PI / 4) - radians) ),
-		       rearLeftOutput = ( (-1 * maxMotorSpeed) * cos( (PI / 4) + radians) );
+		double frontLeftOutput	=	-maxMotorSpeed * cos((PI / 4) - radians) ,
+		       frontRightOutput =	 maxMotorSpeed * cos((PI / 4) + radians) ,
+		       rearRightOutput	=	 maxMotorSpeed * cos((PI / 4) - radians) ,
+		       rearLeftOutput	=   -maxMotorSpeed * cos((PI / 4) + radians);
 
 		frontLeftOutput += rotation;
 		frontRightOutput += rotation;
@@ -81,13 +81,21 @@ void RadianOutput(double radians, double speed, int rotation)
 	}
 }
 
+typedef struct
+{
+	double radians;
+	double speed;
+} PolarJoystick;
+
 double getJoyPolarRadians() 
 { 
-	return atan2((double) joystickGetAnalog(1, 2), (double) joystickGetAnalog(1, 1)); 
+	return atan2((double) joystickGetAnalog(1, 2), (double) joystickGetAnalog(1, 1));
 }
-double getJoyPolarSpeed() 
-{ 
-	return (maxMotorSpeed / sqrt((double) (joystickGetAnalog(1, 2) ^ 2) + (double) (joystickGetAnalog(1, 1) ^ 2))); 
+double getJoyPolarSpeed()
+{
+	double tmpSpeed = sqrt((joystickGetAnalog(1, 2) * joystickGetAnalog(1, 2)) + (joystickGetAnalog(1, 1) * joystickGetAnalog(1, 1)));
+	tmpSpeed /= maxMotorSpeed;
+	tmpSpeed = tmpSpeed > 1 ? 1 : tmpSpeed;
+	return tmpSpeed;
 }
-
-#endif HOLONOMICRADIANS_H_
+#endif

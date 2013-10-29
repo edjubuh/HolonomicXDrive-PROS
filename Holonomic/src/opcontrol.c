@@ -33,6 +33,7 @@
  */
 
 #include "main.h"
+#include "API.h"
 #include "HolonomicRadians.h"
 #include "CortexDefinitions.h"
 
@@ -54,85 +55,107 @@
  * This task should never exit; it should end with some kind of infinite loop, even if empty.
  */
 void operatorControl() {
-	bool lcdLeftPressed = false;
-	bool lcdCenterPressed = false;
-	bool lcdRightPressed = false;
-
-	bool joy8LPressed = false;
-	bool joy8UPressed = false;
-	bool joy8RPressed = false;
-
-	bool killSwitch = false;
-	int radianMultiplier = 0;
-
-	lcdSetText(uart1, 1, "Cycle PI/4");
-	while (true) {
-		if (lcdReadButtons(uart1) == LCD_BTN_LEFT && !lcdLeftPressed)
+	if (digitalRead(1) && isJoystickConnected(1))
+	{
+		PolarJoystick joystick;
+		while (true)
 		{
-			radianMultiplier--;
-			lcdLeftPressed = true;
+			joystick.speed = getJoyPolarSpeed();
+			joystick.radians = (PI / 2) - getJoyPolarRadians();
+			lcdPrint(uart1, 1, "s: %f", joystick.speed);
+			lcdPrint(uart1, 2, "r: %f", joystick.radians);
+			RadianOutput(joystick.radians, joystick.speed, joystickGetAnalog(1, 4));
+			delay(20);
 		}
-		else if (lcdReadButtons(uart1) != LCD_BTN_LEFT) lcdLeftPressed = false;
+	}
+	else
+	{
 
-		if (lcdReadButtons(uart1) == LCD_BTN_CENTER && !lcdCenterPressed)
+		bool lcdLeftPressed = false;
+		bool lcdCenterPressed = false;
+		bool lcdRightPressed = false;
+
+		bool joy8LPressed = false;
+		bool joy8UPressed = false;
+		bool joy8RPressed = false;
+
+		bool killSwitch = true;
+		int radianMultiplier = 0;
+		float radians = 0;
+
+		lcdSetText(uart1, 1, "Cycle PI/4");
+		while (true) 
 		{
-			killSwitch = true;
-			lcdCenterPressed = true;
+			if (lcdReadButtons(uart1) == LCD_BTN_LEFT && !lcdLeftPressed)
+			{
+				radianMultiplier--;
+				lcdLeftPressed = true;
+			}
+			else if (lcdReadButtons(uart1) != LCD_BTN_LEFT) lcdLeftPressed = false;
+
+			if (lcdReadButtons(uart1) == LCD_BTN_CENTER && !lcdCenterPressed)
+			{
+				killSwitch = killSwitch ? false : true;
+				lcdCenterPressed = true;
+			}
+			else if (lcdReadButtons(uart1) != LCD_BTN_CENTER) lcdCenterPressed = false;
+
+			if (lcdReadButtons(uart1) == LCD_BTN_RIGHT && !lcdRightPressed)
+			{
+				radianMultiplier++;
+				lcdRightPressed = true;
+			}
+			else if (lcdReadButtons(uart1) != LCD_BTN_RIGHT) lcdRightPressed = false;
+
+			if (joystickGetDigital(1, 8, JOY_LEFT) && !joy8LPressed)
+			{
+				radianMultiplier--;
+				joy8LPressed = true;
+			}
+			else if (!joystickGetDigital(1, 8, JOY_LEFT)) joy8LPressed = false;
+
+			if (joystickGetDigital(1, 8, JOY_UP) && !joy8UPressed)
+			{
+				killSwitch = killSwitch ? false : true;
+				joy8UPressed = true;
+			}
+			else if (!joystickGetDigital(1, 8, JOY_UP)) joy8UPressed = false;
+
+			if (joystickGetDigital(1, 8, JOY_RIGHT) && !joy8RPressed)
+			{
+				radianMultiplier++;
+				joy8RPressed = true;
+			}
+			else if (joystickGetDigital(1, 8, JOY_RIGHT)) joy8RPressed = false;
+
+			if (radianMultiplier > 7) radianMultiplier = 0;
+			if (radianMultiplier < 0) radianMultiplier = 7;
+
+			switch (radianMultiplier)
+			{
+			case 0: lcdSetText(uart1, 2, "<      0       >"); radians = 0;  break;
+			case 1: lcdSetText(uart1, 2, "<     PI/4     >"); radians = PI / 4;  break;
+			case 2: lcdSetText(uart1, 2, "<     PI/2     >"); radians = PI / 2; break;
+			case 3: lcdSetText(uart1, 2, "<     3PI/4    >"); radians = (3 * PI) / 4; break;
+			case 4: lcdSetText(uart1, 2, "<      PI      >"); radians = PI; break;
+			case 5: lcdSetText(uart1, 2, "<     5PI/4    >"); radians = (5 * PI) / 4; break;
+			case 6: lcdSetText(uart1, 2, "<     3PI/2    >"); radians = (3 * PI) / 2; break;
+			case 7: lcdSetText(uart1, 2, "<     7PI/4    >"); radians = (7 * PI) / 4; break;
+			default:
+				lcdSetText(uart1, 2, "     ERROR      ");
+				motorStopAll(); delay(100);
+				killSwitch = true;
+				radianMultiplier = 0;
+				break;
+			}
+
+			if (killSwitch)
+			{
+				lcdSetText(uart1, 2, "KILLED");
+				motorStopAll();
+			}
+			else RadianOutput(radians, 1, 0);
+			delay(20);
 		}
-		else if (lcdReadButtons(uart1) != LCD_BTN_CENTER) lcdCenterPressed = false;
-
-		if (lcdReadButtons(uart1) == LCD_BTN_RIGHT && !lcdRightPressed)
-		{
-			radianMultiplier++;
-			lcdRightPressed = true;
-		}
-		else if (lcdReadButtons(uart1) != LCD_BTN_RIGHT) lcdRightPressed = false;
-
-		if (joystickGetDigital(1, 8, JOY_LEFT) && !joy8LPressed)
-		{
-			radianMultiplier--;
-			joy8LPressed = true;
-		}
-		else if (!joystickGetDigital(1, 8, JOY_LEFT)) joy8LPressed = false;
-
-		if (joystickGetDigital(1, 8, JOY_UP) && !joy8UPressed)
-		{
-			killSwitch = true;
-			joy8UPressed = true;
-		}
-		else if (!joystickGetDigital(1, 8, JOY_UP)) joy8UPressed = false;
-
-		if (joystickGetDigital(1, 8, JOY_RIGHT) && !joy8RPressed)
-		{
-			radianMultiplier++;
-			joy8RPressed = true;
-		}
-		else if (joystickGetDigital(1, 8, JOY_RIGHT)) joy8RPressed = false;
-
-		if (radianMultiplier > 7) radianMultiplier = 0;
-		if (radianMultiplier < 0) radianMultiplier = 7;
-
-		switch (radianMultiplier)
-		{
-		case 0: lcdSetText(uart1, 2, "<      0       >"); break;
-		case 1: lcdSetText(uart1, 2, "<     PI/4     >"); break;
-		case 2: lcdSetText(uart1, 2, "<     PI/2     >"); break;
-		case 3: lcdSetText(uart1, 2, "<     3PI/4    >"); break;
-		case 4: lcdSetText(uart1, 2, "<      PI      >"); break;
-		case 5: lcdSetText(uart1, 2, "<     5PI/4    >"); break;
-		case 6: lcdSetText(uart1, 2, "<     3PI/2    >"); break;
-		case 7: lcdSetText(uart1, 2, "<     7PI/4    >"); break;
-		default:
-			lcdSetText(uart1, 2, "     ERROR      "); 
-			motorStopAll(); delay(100); 
-			killSwitch = true; 
-			radianMultiplier = 0;
-			break;
-		}
-
-		if (killSwitch) lcdSetText(uart1, 2, "KILLED");
-		if (!killSwitch) RadianOutput(((float) radianMultiplier*(PI / 4)), 1, 0);
-		else  motorStopAll();
-		delay(20);
 	}
 }
